@@ -123,6 +123,29 @@ return this.infinityModel("product", { perPage: 12, startingPage: 1,
                                        category: "furniture" });
 ```
 
+If the extra param you pass in is available as a property/computed on the route and it returns some value, 
+this value will be used to set the extra param, otherwise, it'll be left as a string:
+
+```js
+prod: function () {
+  return this.get('cat');
+}.property('cat'),
+
+country: '',
+cat: 'shipped',
+date: null,
+
+return this.infinityModel("product", { perPage: 12, startingPage: 1, make: "original", country: "country", category: "prod", date: "2015" });
+```
+
+The route object will be inspected to see if the extra param's value is a property that returns anything but 'none' (as in: not `Ember.isNone(something)`).
+
+In the example above, the query url should look like this:
+
+```js
+    product?make=original&country=&category=shipped&date=2015&per_page=12&page=1
+```
+
 * **modelPath**
 
 `modelPath` is optional parameter for situations when you are overriding `setupController`

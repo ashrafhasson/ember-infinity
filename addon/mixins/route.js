@@ -140,6 +140,12 @@ export default Ember.Mixin.create({
     requestPayloadBase[this.get('perPageParam')] = perPage;
     requestPayloadBase[this.get('pageParam')] = startingPage;
 
+    var extraParams = this.get('_extraParams'), _this = this;
+    options = {};
+    Ember.keys(extraParams).forEach(function(key) {
+      options[key] = Ember.isNone(_this.get(extraParams[key])) ? extraParams[key] : _this.get(extraParams[key]);
+    });
+
     var params = Ember.merge(requestPayloadBase, options);
     var promise = this.store.find(modelName, params);
 
@@ -175,6 +181,8 @@ export default Ember.Mixin.create({
     var totalPages  = this.get('_totalPages');
     var model       = this.get(this.get('_modelPath'));
     var modelName   = this.get('_infinityModelName');
+    var extraParams = this.get('_extraParams');
+    var options = {};
 
     if (!this.get('_loadingMore') && this.get('_canLoadMore')) {
       this.set('_loadingMore', true);
@@ -183,7 +191,12 @@ export default Ember.Mixin.create({
       requestPayloadBase[this.get('perPageParam')] = perPage;
       requestPayloadBase[this.get('pageParam')] = nextPage;
 
-      var params = Ember.merge(requestPayloadBase, this.get('_extraParams'));
+      var _this = this;
+      Ember.keys(extraParams).forEach(function(key) {
+        options[key] = Ember.isNone(_this.get(extraParams[key])) ? extraParams[key] : _this.get(extraParams[key]);
+      });
+
+      var params = Ember.merge(requestPayloadBase, options);
       var promise = this.store.find(modelName, params);
 
       promise.then(
