@@ -113,7 +113,7 @@ and ember-infinity will be set up to parse the total number of pages from a JSON
 
 ### infinityModel
 
-You can also provide additional parameters to `infinityModel` that
+You can also provide additional static parameters to `infinityModel` that
 will be passed to your backend server in addition to the
 pagination params. For instance, in the following example a `category`
 parameter is added:
@@ -123,27 +123,40 @@ return this.infinityModel("product", { perPage: 12, startingPage: 1,
                                        category: "furniture" });
 ```
 
-If the extra param you pass in is available as a property/computed on the route and it returns some value, 
-this value will be used to set the extra param, otherwise, it'll be left as a string:
+Moreover, you can optionally pass in an object of bound parameters as a third option to `infinityModel` to further 
+customize the request to the backend. The values of the contained parameters will be looked up against the route 
+properties and the respective values will be included in the request:
 
 ```js
-prod: function () {
-  return this.get('cat');
-}.property('cat'),
+import Ember from 'ember';
+import InfinityRoute from 'ember-infinity/mixins/route';
 
-country: '',
-cat: 'shipped',
-date: null,
+export default Ember.Route.extend(InfinityRoute, {
+  ...
 
-return this.infinityModel("product", { perPage: 12, startingPage: 1, make: "original", country: "country", category: "prod", date: "2015" });
+  prod: function () { return this.get('cat'); }.property('cat'),
+  country: '',
+  cat: 'shipped',
+
+  model: function () {
+    return this.infinityModel("product", { perPage: 12, startingPage: 1, make: "original" }, { country: "country", category: "prod" });
+  }
+});
 ```
-
-The route object will be inspected to see if the extra param's value is a property that returns anything but 'none' (as in: not `Ember.isNone(something)`).
 
 In the example above, the query url should look like this:
 
 ```js
-    product?make=original&country=&category=shipped&date=2015&per_page=12&page=1
+    product?make=original&country=&category=shipped&per_page=12&page=1
+```
+
+If the value of the bound parameter cannot be found, the parameter is not included in the request. Note that you cannot have
+a static and bound parameter of the same name, the latter will take precedence.
+
+When you need to pass in bound parameters but no static parameters or custom pagination, call `infinityModel` with an empty object for it's second param:
+
+```js
+  return this.infinityModel("product", {}, { country: "country", category: "prod" });
 ```
 
 * **modelPath**

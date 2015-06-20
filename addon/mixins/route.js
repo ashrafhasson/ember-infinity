@@ -38,6 +38,14 @@ export default Ember.Mixin.create({
 
   /**
     @private
+    @property _boundParams
+    @type Object
+    @default {}
+  */
+  _boundParams: {},
+
+  /**
+    @private
     @property _loadingMore
     @type Boolean
     @default false
@@ -113,7 +121,7 @@ export default Ember.Mixin.create({
     @param {Object} options Optional, the perPage and startingPage to load from.
     @return {Ember.RSVP.Promise}
   */
-  infinityModel(modelName, options) {
+  infinityModel(modelName, options, boundParams) {
 
     if (Ember.isEmpty(this.store) || Ember.isEmpty(this.store.find)){
       throw new Ember.Error("Ember Data store is not available to infinityModel");
@@ -135,16 +143,20 @@ export default Ember.Mixin.create({
     this.set('_perPage', perPage);
     this.set('_modelPath', modelPath);
     this.set('_extraParams', options);
+    if (typeof boundParams === 'object') {
+      this.set('_boundParams', boundParams);
+    }
 
     var requestPayloadBase = {};
     requestPayloadBase[this.get('perPageParam')] = perPage;
     requestPayloadBase[this.get('pageParam')] = startingPage;
 
-    var extraParams = this.get('_extraParams'), _this = this;
-    options = {};
-    Ember.keys(extraParams).forEach(function(key) {
-      options[key] = Ember.isNone(_this.get(extraParams[key])) ? extraParams[key] : _this.get(extraParams[key]);
-    });
+    if (Ember.keys(this.get('_boundParams')).length > 0) {
+      var _this = this;
+      Ember.keys(boundParams).forEach(function(key) {
+        options[key] = _this.get(boundParams[key]);
+      });
+    }
 
     var params = Ember.merge(requestPayloadBase, options);
     var promise = this.store.find(modelName, params);
@@ -181,8 +193,8 @@ export default Ember.Mixin.create({
     var totalPages  = this.get('_totalPages');
     var model       = this.get(this.get('_modelPath'));
     var modelName   = this.get('_infinityModelName');
-    var extraParams = this.get('_extraParams');
-    var options = {};
+    var options     = this.get('_extraParams');
+    var boundParams = this.get('_boundParams');
 
     if (!this.get('_loadingMore') && this.get('_canLoadMore')) {
       this.set('_loadingMore', true);
@@ -191,10 +203,12 @@ export default Ember.Mixin.create({
       requestPayloadBase[this.get('perPageParam')] = perPage;
       requestPayloadBase[this.get('pageParam')] = nextPage;
 
-      var _this = this;
-      Ember.keys(extraParams).forEach(function(key) {
-        options[key] = Ember.isNone(_this.get(extraParams[key])) ? extraParams[key] : _this.get(extraParams[key]);
-      });
+      if (Ember.keys(boundParams).length > 0) {
+        var _this = this;
+        Ember.keys(boundParams).forEach(function(key) {
+          options[key] = _this.get(boundParams[key]);
+        });
+      }
 
       var params = Ember.merge(requestPayloadBase, options);
       var promise = this.store.find(modelName, params);
